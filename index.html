@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CS26505 Advanced Networking - @gordxrohit </title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            teal: {
+              50: '#f0fdfa',
+              100: '#ccfbf1',
+              500: '#14b8a6',
+              600: '#0d9488',
+              700: '#0f766e',
+              800: '#115e59',
+              900: '#134e4a',
+              950: '#042f2e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #090d16;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #0d9488;
+    }
+    .ed-card {
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .pulse-glow-green {
+      box-shadow: 0 0 18px rgba(16, 185, 129, 0.35);
+    }
+    .pulse-glow-red {
+      box-shadow: 0 0 18px rgba(244, 63, 94, 0.35);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased selection:bg-teal-500 selection:text-white min-h-screen flex flex-col">
+
+  <!-- TOP STICKY ED-TECH HEADER BAR -->
+  <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-4 py-3 shadow-lg">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3" id="header-container">
+      <!-- Dynamic JS Content Header -->
+    </div>
+  </header>
+
+  <!-- MAIN APP CONTAINER -->
+  <main id="app-root" class="flex-1 flex flex-col max-w-7xl w-full mx-auto p-3 sm:p-6">
+    <!-- Rendered via JS -->
+  </main>
+
+  <!-- SUBMIT CONFIRMATION MODAL -->
+  <div id="submit-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="ed-card rounded-3xl max-w-md w-full p-6 sm:p-7 border border-slate-700 shadow-2xl space-y-5 animate-fade-in">
+      <h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+        <span>📑</span> Ready to Complete Your Test?
+      </h3>
+      <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-2 text-xs">
+        <div class="flex justify-between text-slate-300">
+          <span>Total Questions:</span>
+          <span class="font-bold text-white">100</span>
+        </div>
+        <div class="flex justify-between text-slate-300">
+          <span>Attempted:</span>
+          <span class="font-bold text-teal-400" id="modal-attempted-cnt">0</span>
+        </div>
+        <div class="flex justify-between text-slate-300">
+          <span>Unanswered:</span>
+          <span class="font-bold text-rose-400" id="modal-unanswered-cnt">100</span>
+        </div>
+        <div class="flex justify-between text-slate-300">
+          <span>Marked for Review:</span>
+          <span class="font-bold text-amber-400" id="modal-marked-cnt">0</span>
+        </div>
+      </div>
+      <div class="flex items-center justify-end space-x-3 pt-2">
+        <button onclick="window.closeSubmitModal()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition">
+          Resume Practice
+        </button>
+        <button onclick="window.confirmSubmitExam()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 text-white text-xs font-extrabold shadow-lg shadow-teal-900/40 transition">
+          Confirm & Submit
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILE QUESTION PALETTE DRAWER (< 1024px) -->
+  <div id="mobile-drawer" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm lg:hidden transition-opacity">
+    <div class="fixed inset-y-0 right-0 max-w-xs w-full bg-slate-900 border-l border-slate-800 p-4 flex flex-col shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+        <h3 class="text-sm font-extrabold text-white">Question Palette</h3>
+        <button onclick="window.toggleMobileDrawer(false)" class="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white">
+          ✕
+        </button>
+      </div>
+      <div id="mobile-palette-container" class="flex-1 overflow-y-auto">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <script>
+    // --- 100 HIGH-YIELD ADVANCED NETWORKING MCQs DATABASE ---
+    const QUESTIONS = [
+      // ================= MODULE 3 (33 QUESTIONS: 1 to 33) =================
+      {
+        id: 1, module: "Module 3", topic: "IPv6 Structure",
+        question: "What is the exact bit length of a standard IPv6 address?",
+        options: ["32 bits", "64 bits", "128 bits", "256 bits"], correct: 2,
+        explanation: "IPv6 addresses are 128 bits (16 bytes) long, providing an address space of 2^128 (approx. 3.4 x 10^38 addresses), solving IPv4 address exhaustion.",
+        takeaway: "IPv4 = 32 bits | IPv6 = 128 bits."
+      },
+      {
+        id: 2, module: "Module 3", topic: "IPv6 Communication Types",
+        question: "Which communication mechanism available in IPv4 was completely ELIMINATED in IPv6?",
+        options: ["Unicast", "Multicast", "Anycast", "Broadcast"], correct: 3,
+        explanation: "Broadcast is not supported in IPv6. Broadcast functionality is handled by specialized Multicast groups (e.g., All-Nodes Multicast FF02::1).",
+        takeaway: "IPv6 includes Unicast, Multicast, and Anycast, but NO Broadcast."
+      },
+      {
+        id: 3, module: "Module 3", topic: "IPv6 Transition Mechanisms",
+        question: "Which IPv4-to-IPv6 transition technique encapsulates IPv6 packets inside IPv4 datagrams to pass through legacy IPv4 routers?",
+        options: ["Dual Stack", "Tunneling", "NAT-PT", "SLAAC"], correct: 1,
+        explanation: "Tunneling wraps IPv6 packets inside standard IPv4 headers so they can traverse intermediate legacy IPv4-only networks transparently.",
+        takeaway: "Tunneling = Encapsulating IPv6 inside IPv4 packets."
+      },
+      {
+        id: 4, module: "Module 3", topic: "IPv4 Multicast Addressing",
+        question: "In IPv4 addressing, which class is strictly reserved for IP Multicasting?",
+        options: ["Class A", "Class B", "Class C", "Class D"], correct: 3,
+        explanation: "Class D (224.0.0.0 to 239.255.255.255) is dedicated exclusively to IPv4 Multicast traffic.",
+        takeaway: "Class D = Multicast (224.0.0.0 - 239.255.255.255)."
+      },
+      {
+        id: 5, module: "Module 3", topic: "DVMRP Protocol",
+        question: "Distance Vector Multicast Routing Protocol (DVMRP) relies on which core mechanism to build multicast trees?",
+        options: ["Link State Advertisements", "Reverse Path Multicasting (RPM) with Flooding & Pruning", "Dijkstra Shortest Path First", "Rendezvous Point Tree"], correct: 1,
+        explanation: "DVMRP uses Reverse Path Multicasting (RPM). It floods multicast packets downstream using RPF and prunes non-receiving branches.",
+        takeaway: "DVMRP = Reverse Path Multicasting (RPM) via Flood & Prune."
+      },
+      {
+        id: 6, module: "Module 3", topic: "PIM Operating Modes",
+        question: "Protocol Independent Multicast (PIM) operates in two distinct modes. What are they?",
+        options: ["Static Mode & Dynamic Mode", "Dense Mode (PIM-DM) & Sparse Mode (PIM-SM)", "Direct Mode & Indirect Mode", "Unicast & Multicast Mode"], correct: 1,
+        explanation: "PIM-Dense Mode (PIM-DM) uses flood-and-prune for dense environments; PIM-Sparse Mode (PIM-SM) uses explicit joins via a Rendezvous Point.",
+        takeaway: "PIM variants = PIM-DM (Flood/Prune) and PIM-SM (Explicit Join)."
+      },
+      {
+        id: 7, module: "Module 3", topic: "PIM-SM Architecture",
+        question: "In PIM-Sparse Mode (PIM-SM), what is the central router called that acts as the meeting point for sources and receivers?",
+        options: ["Home Agent", "Designated Bridge", "Rendezvous Point (RP)", "Label Switch Router"], correct: 2,
+        explanation: "In PIM-SM, multicast sources register with a central Rendezvous Point (RP), and receivers send explicit Join messages to the RP.",
+        takeaway: "PIM-SM relies on a Rendezvous Point (RP)."
+      },
+      {
+        id: 8, module: "Module 3", topic: "MSDP Protocol",
+        question: "What is the primary function of MSDP (Multicast Source Discovery Protocol)?",
+        options: ["To assign dynamic IPv6 addresses", "To connect separate PIM-SM domains and share active multicast source info", "To format video payloads", "To replace TCP handshake"], correct: 1,
+        explanation: "MSDP runs between Rendezvous Points (RPs) in different PIM-SM administrative domains to discover active multicast sources across domains.",
+        takeaway: "MSDP connects Rendezvous Points across PIM-SM domains."
+      },
+      {
+        id: 9, module: "Module 3", topic: "MPLS Technology",
+        question: "What does MPLS stand for in high-speed network packet forwarding?",
+        options: ["Multi-Protocol Link Switching", "Multiprotocol Label Switching", "Media Path Layer Switching", "Multi-Path Local Socket"], correct: 1,
+        explanation: "MPLS stands for Multiprotocol Label Switching. It forwards traffic based on short fixed-length labels rather than complex IP lookup tables.",
+        takeaway: "MPLS = Multiprotocol Label Switching."
+      },
+      {
+        id: 10, module: "Module 3", topic: "MPLS Header Location",
+        question: "Where is the MPLS Label Header (Shim Header) placed in the network stack?",
+        options: ["Below Layer 1", "Between Layer 2 (Data Link) and Layer 3 (Network)", "Between Layer 3 and Layer 4", "Above Layer 7"], correct: 1,
+        explanation: "The MPLS label header is called a 'shim header' because it is inserted between Layer 2 (e.g., Ethernet MAC) and Layer 3 (IP).",
+        takeaway: "MPLS Shim Header sits between Layer 2 and Layer 3."
+      },
+      {
+        id: 11, module: "Module 3", topic: "MPLS Shim Header Structure",
+        question: "What is the bit length of the Label field inside the 32-bit MPLS Shim Header?",
+        options: ["8 bits", "16 bits", "20 bits", "32 bits"], correct: 2,
+        explanation: "The 32-bit MPLS Shim Header contains: 20-bit Label, 3-bit Traffic Class (TC), 1-bit Bottom of Stack (S), and 8-bit TTL.",
+        takeaway: "MPLS Label = 20 bits in a 32-bit header."
+      },
+      {
+        id: 12, module: "Module 3", topic: "Mobile IP Addressing",
+        question: "In Mobile IP, what temporary address is assigned to a Mobile Node when visiting a foreign network?",
+        options: ["Home Address", "Care-of Address (CoA)", "Permanent MAC Address", "Loopback Address"], correct: 1,
+        explanation: "The Care-of Address (CoA) reflects the Mobile Node's current location in a foreign network, allowing the Home Agent to route packets to it.",
+        takeaway: "Foreign network address = Care-of Address (CoA)."
+      },
+      {
+        id: 13, module: "Module 3", topic: "Mobile IP Entities",
+        question: "Which router entity on the home network intercepts packets for a roaming mobile node and tunnels them to the CoA?",
+        options: ["Foreign Agent (FA)", "Home Agent (HA)", "Border Gateway Router", "DNS Server"], correct: 1,
+        explanation: "The Home Agent (HA) intercepts packets addressed to the Mobile Node's permanent Home Address and tunnels them to the Care-of Address.",
+        takeaway: "Home Agent (HA) intercepts and tunnels packets to CoA."
+      },
+      {
+        id: 14, module: "Module 3", topic: "IPv6 Header Fields",
+        question: "Which IPv6 header field replaces IPv4's Time to Live (TTL)?",
+        options: ["Hop Limit", "Traffic Class", "Flow Label", "Next Header"], correct: 0,
+        explanation: "IPv6 renames TTL to 'Hop Limit', explicitly specifying the maximum number of router hops a packet can traverse before being discarded.",
+        takeaway: "IPv4 TTL = IPv6 Hop Limit."
+      },
+      {
+        id: 15, module: "Module 3", topic: "IPv6 QoS Fields",
+        question: "What is the primary purpose of the 20-bit 'Flow Label' field in the IPv6 base header?",
+        options: ["To identify packet fragments", "To maintain sequence numbers", "To identify specific real-time packet flows for special QoS handling", "To store checksums"], correct: 2,
+        explanation: "The 20-bit Flow Label allows routers to identify and provide non-default QoS treatment to specific streams of packets (e.g., real-time media).",
+        takeaway: "Flow Label = 20 bits for real-time QoS flow identification."
+      },
+      {
+        id: 16, module: "Module 3", topic: "IPv6 Extension Headers",
+        question: "How does IPv6 support optional header fields like security, fragmentation, and routing options?",
+        options: ["Inside a variable base header", "Using a chain of Extension Headers linked by the 'Next Header' field", "Inside the TCP payload", "Via ARP messages"], correct: 1,
+        explanation: "IPv6 base header is fixed at 40 bytes. Options are appended as modular Extension Headers linked sequentially via the Next Header field.",
+        takeaway: "IPv6 base header is fixed (40B); options use chained Extension Headers."
+      },
+      {
+        id: 17, module: "Module 3", topic: "IPv6 Address Syntax",
+        question: "How many times can the double colon (::) zero compression symbol appear in a single IPv6 address?",
+        options: ["Unlimited times", "Only ONCE", "Up to two times", "Only for even blocks"], correct: 1,
+        explanation: "The double colon (::) can be used only ONCE in an IPv6 address string to prevent ambiguity when expanding zero blocks.",
+        takeaway: "Double colon (::) can appear ONLY ONCE in an IPv6 address."
+      },
+      {
+        id: 18, module: "Module 3", topic: "Multicast Forwarding",
+        question: "What is the primary function of Reverse Path Forwarding (RPF) in multicast routing?",
+        options: ["To prevent routing loops by validating that packets arrive on the interface used to reach the source", "To convert multicast to unicast", "To calculate packet jitter", "To update BGP routing tables"], correct: 0,
+        explanation: "RPF ensures a multicast packet is accepted only if it arrives on the interface that would be used to send unicast packets back to the source.",
+        takeaway: "RPF check prevents multicast loops."
+      },
+      {
+        id: 19, module: "Module 3", topic: "MPLS Router Roles",
+        question: "Which router type sits at the boundary of an MPLS network to PUSH or POP labels?",
+        options: ["Label Switch Router (LSR)", "Label Edge Router (LER)", "Autonomous System Router", "Designated Router (DR)"], correct: 1,
+        explanation: "Label Edge Routers (LERs) sit at the boundary. They PUSH labels onto incoming IP packets and POP labels off outgoing packets.",
+        takeaway: "LER = Edge router (Pushes/Pops labels). LSR = Core router (Swaps labels)."
+      },
+      {
+        id: 20, module: "Module 3", topic: "MPLS FEC",
+        question: "In MPLS, a set of IP packets forwarded over the same path with the same label treatment is called a:",
+        options: ["Forwarding Equivalence Class (FEC)", "Virtual Circuit Group", "QoS Slice", "Multicast Group"], correct: 0,
+        explanation: "FEC (Forwarding Equivalence Class) defines a group of packets mapped to the same label and routed along the same path.",
+        takeaway: "FEC = Forwarding Equivalence Class."
+      },
+      {
+        id: 21, module: "Module 3", topic: "Mobile IP Routing",
+        question: "What causes the routing inefficiency known as 'Triangle Routing' in basic Mobile IP?",
+        options: ["Packets pass through 3 foreign agents", "Correspondent Node packets must travel to the Home Agent first before being tunneled to the Mobile Node", "Triple encryption overhead", "IPv4 to IPv6 translation"], correct: 1,
+        explanation: "Triangle Routing occurs because all incoming packets sent to a Mobile Node are routed to its Home Agent first, which then tunnels them to the CoA.",
+        takeaway: "Triangle Routing = Correspondent -> Home Agent -> Mobile Node."
+      },
+      {
+        id: 22, module: "Module 3", topic: "IPv6 Neighbor Discovery",
+        question: "Which IPv6 protocol replaces IPv4's Address Resolution Protocol (ARP)?",
+        options: ["IGMP", "Neighbor Discovery Protocol (NDP)", "DHCPv4", "RIPng"], correct: 1,
+        explanation: "IPv6 Neighbor Discovery Protocol (NDP) uses ICMPv6 messages (Neighbor Solicitation & Advertisement) to map IP addresses to MAC addresses.",
+        takeaway: "IPv4 ARP is replaced by IPv6 NDP."
+      },
+      {
+        id: 23, module: "Module 3", topic: "IPv6 Autoconfiguration",
+        question: "What feature enables an IPv6 host to automatically configure its own IP address without a stateful DHCP server?",
+        options: ["NAT-PT", "SLAAC (Stateless Address Autoconfiguration)", "MPLS Labeling", "BGP Peering"], correct: 1,
+        explanation: "SLAAC allows hosts to generate their own unique IPv6 address using router advertisement network prefixes and local interface IDs.",
+        takeaway: "SLAAC = Stateless Address Autoconfiguration."
+      },
+      {
+        id: 24, module: "Module 3", topic: "IPv4 Multicast Membership",
+        question: "Which protocol is used by IPv4 hosts to report multicast group memberships to local routers?",
+        options: ["ICMP", "IGMP (Internet Group Management Protocol)", "OSPF", "BGP"], correct: 1,
+        explanation: "IGMP operates between IPv4 hosts and local multicast routers to manage group memberships.",
+        takeaway: "IGMP manages IPv4 host-to-router multicast membership."
+      },
+      {
+        id: 25, module: "Module 3", topic: "IPv6 Multicast Prefix",
+        question: "All IPv6 Multicast addresses begin with which hexadecimal prefix?",
+        options: ["FE80::/10", "FF00::/8", "2001::/16", "FC00::/7"], correct: 1,
+        explanation: "IPv6 Multicast addresses are identified by the prefix FF00::/8 (the first 8 bits are all 1s).",
+        takeaway: "IPv6 Multicast prefix = FF00::/8."
+      },
+      {
+        id: 26, module: "Module 3", topic: "PIM-SM Shortest Path Tree",
+        question: "In PIM-SM, after initial data delivery via the Shared Tree (RPT), routers can switch to a direct source path called:",
+        options: ["Shared Tree (RPT)", "Source-Specific Shortest Path Tree (SPT)", "Unicast Loop", "Default Gateway"], correct: 1,
+        explanation: "PIM-SM allows downstream routers to switch from the Rendezvous Point Tree (RPT) to a direct Source-Specific Tree (SPT) to optimize latency.",
+        takeaway: "PIM-SM can switch from RPT to SPT."
+      },
+      {
+        id: 27, module: "Module 3", topic: "MPLS Label Exchange",
+        question: "Which control protocol is standardly used by MPLS routers to exchange label bindings?",
+        options: ["LDP (Label Distribution Protocol)", "IGMP", "RTCP", "STP"], correct: 0,
+        explanation: "LDP (Label Distribution Protocol) enables Label Switch Routers to exchange label mapping information.",
+        takeaway: "LDP distributes labels in MPLS networks."
+      },
+      {
+        id: 28, module: "Module 3", topic: "Mobile IP Route Optimization",
+        question: "How is Triangle Routing eliminated in Mobile IP route optimization?",
+        options: ["By setting static public IPs", "By informing the Correspondent Node directly of the Mobile Node's Care-of Address (CoA)", "By broadcasting packets", "By turning off encryption"], correct: 1,
+        explanation: "Route optimization sends binding updates directly to the Correspondent Node containing the CoA so packets bypass the Home Agent.",
+        takeaway: "Route Optimization sends CoA directly to Correspondent Node."
+      },
+      {
+        id: 29, module: "Module 3", topic: "IPv6 Link-Local Address",
+        question: "What is the mandatory prefix for IPv6 Link-Local addresses?",
+        options: ["FE80::/10", "FF02::/16", "2001::/3", "::1/128"], correct: 0,
+        explanation: "IPv6 Link-Local addresses use the prefix FE80::/10 and are non-routable beyond the local link.",
+        takeaway: "Link-Local prefix = FE80::/10."
+      },
+      {
+        id: 30, module: "Module 3", topic: "IPv6 Anycast",
+        question: "How does Anycast routing deliver packets in IPv6?",
+        options: ["Delivers packet to ALL nodes", "Delivers packet to the SINGLE topologically NEAREST node sharing the Anycast address", "Broadcasts globally", "Drops packet after 1 hop"], correct: 1,
+        explanation: "An Anycast address is assigned to multiple interfaces; packets are routed to the nearest interface according to routing metrics.",
+        takeaway: "Anycast = One-to-Nearest delivery."
+      },
+      {
+        id: 31, module: "Module 3", topic: "PIM-DM Prune Mechanism",
+        question: "What message does a PIM-DM router send upstream when it has no active receivers for a flooded group?",
+        options: ["Prune Message", "IGMP Query", "Label Request", "SYN Message"], correct: 0,
+        explanation: "In PIM-DM, a router receiving unwanted flooded traffic sends a Prune message upstream to stop forwarding on that link.",
+        takeaway: "No receivers -> PIM-DM sends Prune message."
+      },
+      {
+        id: 32, module: "Module 3", topic: "MPLS Label Stack Flag",
+        question: "In the MPLS Shim Header, what does the 1-bit 'S' (Bottom of Stack) flag indicate when set to 1?",
+        options: ["Label is corrupt", "This label is the LAST label in the MPLS stack", "High priority traffic", "IPv6 payload"], correct: 1,
+        explanation: "The Bottom of Stack (S) bit set to 1 indicates the innermost label, signaling no further MPLS headers follow.",
+        takeaway: "S bit = 1 indicates the bottom of the MPLS label stack."
+      },
+      {
+        id: 33, module: "Module 3", topic: "IPv6 Base Header Size",
+        question: "What is the exact fixed size of the base IPv6 header?",
+        options: ["20 bytes", "32 bytes", "40 bytes", "64 bytes"], correct: 2,
+        explanation: "IPv6 features a streamlined, fixed base header size of exactly 40 bytes (320 bits).",
+        takeaway: "IPv6 base header size = 40 Bytes."
+      },
+
+      // ================= MODULE 4 (33 QUESTIONS: 34 to 66) =================
+      {
+        id: 34, module: "Module 4", topic: "UDP Header Size",
+        question: "What is the fixed header size of User Datagram Protocol (UDP)?",
+        options: ["8 Bytes", "16 Bytes", "20 Bytes", "32 Bytes"], correct: 0,
+        explanation: "UDP header is fixed at 8 Bytes, consisting of 4 fields (2 bytes each): Source Port, Destination Port, Length, Checksum.",
+        takeaway: "UDP Header = 8 Bytes (Source Port, Dest Port, Length, Checksum)."
+      },
+      {
+        id: 35, module: "Module 4", topic: "Transport Demultiplexing",
+        question: "At the transport layer, how does UDP route incoming datagrams to the correct socket?",
+        options: ["MAC Address", "Destination IP Address & Destination Port Number", "Sequence Number", "Flow Label"], correct: 1,
+        explanation: "UDP demultiplexes incoming traffic using the Destination IP address and Destination Port number.",
+        takeaway: "UDP demultiplexing uses Destination IP + Destination Port."
+      },
+      {
+        id: 36, module: "Module 4", topic: "TCP Connection Establishment",
+        question: "How many steps are required to establish a standard TCP connection?",
+        options: ["2-Way Handshake", "3-Way Handshake", "4-Way Handshake", "5-Way Handshake"], correct: 1,
+        explanation: "TCP uses a 3-Way Handshake: SYN -> SYN-ACK -> ACK to synchronize sequence numbers and establish state.",
+        takeaway: "TCP setup = 3-Way Handshake (SYN, SYN-ACK, ACK)."
+      },
+      {
+        id: 37, module: "Module 4", topic: "TCP Connection Flags",
+        question: "Which TCP header flag is set in the first segment sent by a client initiating a connection?",
+        options: ["ACK", "FIN", "SYN", "RST"], correct: 2,
+        explanation: "The client sends a segment with the SYN (Synchronize Sequence Numbers) flag set to initiate connection setup.",
+        takeaway: "First TCP segment sets SYN flag."
+      },
+      {
+        id: 38, module: "Module 4", topic: "TCP Cumulative ACK",
+        question: "If a TCP receiver sends an ACK with sequence number 1001, what does this indicate?",
+        options: ["Byte 1001 was corrupted", "All bytes up to 1000 were received successfully; expecting byte 1001 next", "Sender must pause for 1001 ms", "Packet 1001 is duplicate"], correct: 1,
+        explanation: "TCP ACKs are cumulative. ACK N means all bytes up to N-1 were received correctly and byte N is expected next.",
+        takeaway: "ACK N = Received up to N-1; expecting byte N next."
+      },
+      {
+        id: 39, module: "Module 4", topic: "TCP Flow Control",
+        question: "What mechanism does TCP use for Flow Control to protect the receiver's buffer?",
+        options: ["AIMD Congestion Control", "Sliding Window using Advertised Window (rwnd)", "Leaky Bucket", "Random Early Detection"], correct: 1,
+        explanation: "TCP Flow Control uses a Sliding Window mechanism where the receiver advertises its available buffer space (rwnd) in every ACK.",
+        takeaway: "Flow control prevents receiver buffer overflow via Sliding Window (rwnd)."
+      },
+      {
+        id: 40, module: "Module 4", topic: "TCP Base Header Size",
+        question: "What is the minimum size of a standard TCP header (without options)?",
+        options: ["8 Bytes", "16 Bytes", "20 Bytes", "40 Bytes"], correct: 2,
+        explanation: "The basic TCP header without optional fields is 20 Bytes long.",
+        takeaway: "Base TCP header = 20 Bytes; Base UDP header = 8 Bytes."
+      },
+      {
+        id: 41, module: "Module 4", topic: "TCP Teardown Flag",
+        question: "Which TCP control flag is used to initiate a graceful connection termination?",
+        options: ["RST", "FIN", "URG", "PSH"], correct: 1,
+        explanation: "The FIN (Finish) flag is set to signal that the sender has no more data to transmit, initiating a 4-way teardown.",
+        takeaway: "FIN flag closes connection gracefully."
+      },
+      {
+        id: 42, module: "Module 4", topic: "Transport Pseudo-Header",
+        question: "Which fields outside the transport header are included in the TCP/UDP Pseudo-header for checksum calculation?",
+        options: ["MAC addresses", "Source IP, Destination IP, Protocol ID, and Transport Length", "Router Hop Count", "Application Data"], correct: 1,
+        explanation: "The Pseudo-header includes Source IP, Destination IP, Protocol ID, and Transport Length to detect misrouted segments.",
+        takeaway: "Pseudo-header includes IP Addrs, Protocol ID, and Length."
+      },
+      {
+        id: 43, module: "Module 4", topic: "RPC Architecture",
+        question: "In Remote Procedure Call (RPC), what client-side component packages (marshals) function arguments into network messages?",
+        options: ["Client Stub (Proxy)", "Server Skeleton", "Port Mapper", "Dispatcher"], correct: 0,
+        explanation: "The Client Stub acts as a local proxy that marshals function parameters into a standardized network format.",
+        takeaway: "Client Stub marshals parameters into network format."
+      },
+      {
+        id: 44, module: "Module 4", topic: "RPC Semantics",
+        question: "Which RPC execution semantics guarantees that a remote call executes either once or not at all?",
+        options: ["At-least-once", "At-most-once", "Zero-execution", "Best-effort"], correct: 1,
+        explanation: "At-most-once semantics guarantees the RPC executes 0 or 1 time by filtering duplicate requests using unique identifiers.",
+        takeaway: "At-most-once = Executes 0 or 1 time (prevents duplicate execution)."
+      },
+      {
+        id: 45, module: "Module 4", topic: "RPC Idempotency",
+        question: "An operation is considered 'Idempotent' in RPC systems if:",
+        options: ["It fails on first execution", "Executing it multiple times yields the exact same state/result as executing it once", "It requires 2048-bit keys", "It runs only on UDP"], correct: 1,
+        explanation: "Idempotent operations (such as reading a file or setting a value) can be repeated multiple times without changing the end state.",
+        takeaway: "Idempotent = Repeatable without unintended side effects."
+      },
+      {
+        id: 46, module: "Module 4", topic: "RTP Transport Protocol",
+        question: "Which transport protocol does RTP (Real-Time Transport Protocol) typically run over for media streaming?",
+        options: ["TCP", "UDP", "IP directly", "ICMP"], correct: 1,
+        explanation: "RTP runs over UDP to minimize transmission latency, avoiding TCP retransmission delays.",
+        takeaway: "RTP runs on top of UDP."
+      },
+      {
+        id: 47, module: "Module 4", topic: "RTP Sequence Number",
+        question: "Which RTP header field allows the receiver to detect lost packets and restore proper packet ordering?",
+        options: ["SSRC Identifier", "Sequence Number", "Timestamp", "Payload Type"], correct: 1,
+        explanation: "The 16-bit RTP Sequence Number increments by 1 for each packet, allowing the receiver to detect lost or reordered packets.",
+        takeaway: "RTP Sequence Number detects lost and reordered packets."
+      },
+      {
+        id: 48, module: "Module 4", topic: "RTP Timestamp",
+        question: "What is the primary function of the 32-bit Timestamp field in an RTP header?",
+        options: ["To compute TCP RTT", "To enable synchronized media playback and measure inter-packet jitter", "To store server clock time", "To authenticate sender"], correct: 1,
+        explanation: "The RTP Timestamp reflects the sampling instant of the media, enabling synchronized playback and jitter calculation.",
+        takeaway: "RTP Timestamp enables playback synchronization & jitter measurement."
+      },
+      {
+        id: 49, module: "Module 4", topic: "RTCP Monitoring",
+        question: "What companion protocol works with RTP to monitor Quality of Service and deliver session statistics?",
+        options: ["RTCP (Real-Time Control Protocol)", "RTSP", "RSVP", "IGMP"], correct: 0,
+        explanation: "RTCP periodically transmits control packets (Sender/Receiver Reports) to monitor streaming quality, loss, and jitter.",
+        takeaway: "RTCP delivers QoS feedback stats for RTP sessions."
+      },
+      {
+        id: 50, module: "Module 4", topic: "Nagle's Algorithm",
+        question: "What problem does Nagle's Algorithm solve in TCP?",
+        options: ["Prevents receiver buffer overrun", "Prevents transmission of tiny TCP packets ('small-packet problem') by buffering small writes until an ACK arrives", "Eliminates 3-way handshake", "Resolves IP address conflicts"], correct: 1,
+        explanation: "Nagle's algorithm buffers small outgoing data writes until a full Maximum Segment Size (MSS) can be sent or an ACK is received.",
+        takeaway: "Nagle's Algorithm fixes small-packet header overhead."
+      },
+      {
+        id: 51, module: "Module 4", topic: "Silly Window Syndrome",
+        question: "Silly Window Syndrome in TCP occurs when:",
+        options: ["Receiver advertises tiny window increments, causing sender to transmit tiny data segments with high header overhead", "Network latency drops to zero", "UDP overwrites TCP buffer", "Sequence numbers wrap around"], correct: 0,
+        explanation: "Silly Window Syndrome occurs when receiver applications read data in tiny chunks, causing small window advertisements and inefficient tiny segments.",
+        takeaway: "Silly Window Syndrome = Tiny data segments caused by small window updates."
+      },
+      {
+        id: 52, module: "Module 4", topic: "TCP Urgent Pointer",
+        question: "When the URG flag is set in a TCP header, which field specifies the offset of out-of-band urgent data?",
+        options: ["Window Size", "Urgent Pointer", "Options", "Data Offset"], correct: 1,
+        explanation: "When URG = 1, the 16-bit Urgent Pointer field specifies the offset from the sequence number pointing to urgent data.",
+        takeaway: "URG flag uses the Urgent Pointer field."
+      },
+      {
+        id: 53, module: "Module 4", topic: "TCP Push Flag",
+        question: "What does the PSH (Push) flag instruct the receiving TCP stack to do?",
+        options: ["Clear receiver memory", "Deliver buffered data to the receiving application immediately without waiting for buffer to fill", "Reset connection", "Double receiver window size"], correct: 1,
+        explanation: "The PSH flag notifies the receiving TCP stack to bypass buffering and immediately push data to the application.",
+        takeaway: "PSH flag forces immediate data delivery to application."
+      },
+      {
+        id: 54, module: "Module 4", topic: "TCP Reset Flag",
+        question: "What action occurs when a host receives a TCP segment with the RST (Reset) flag set?",
+        options: ["Retransmits last packet", "Instantly aborts/closes the connection without 4-way teardown", "Increases cwnd", "Sends SYN-ACK"], correct: 1,
+        explanation: "The RST flag forcibly aborts an invalid or unacknowledged TCP connection immediately.",
+        takeaway: "RST flag instantly aborts TCP connection."
+      },
+      {
+        id: 55, module: "Module 4", topic: "TCP Max Header Size",
+        question: "What is the maximum allowed size of a TCP header including all options?",
+        options: ["20 bytes", "40 bytes", "60 bytes", "64 bytes"], correct: 2,
+        explanation: "The 4-bit Data Offset field specifies header size in 4-byte words. Max value is 15 * 4 = 60 Bytes.",
+        takeaway: "Max TCP header size = 60 Bytes (20 base + 40 options)."
+      },
+      {
+        id: 56, module: "Module 4", topic: "TCP Connection 4-Tuple",
+        question: "A TCP connection is uniquely identified on an IP network by which 4-tuple?",
+        options: ["(Source IP, Source Port, Destination IP, Destination Port)", "(Source MAC, Dest MAC, IP, TTL)", "(Seq Num, Ack Num, Window, Checksum)", "(Domain, Port, Router ID, Interface)"], correct: 0,
+        explanation: "Every active TCP socket connection is uniquely identified by (Source IP, Source Port, Destination IP, Destination Port).",
+        takeaway: "TCP 4-Tuple = (Src IP, Src Port, Dst IP, Dst Port)."
+      },
+      {
+        id: 57, module: "Module 4", topic: "RTP SSRC Field",
+        question: "In an RTP header, what does SSRC stand for?",
+        options: ["Single Server Realtime Channel", "Synchronization Source Identifier", "Sequential Service Packet Code", "Secure Socket Relay Class"], correct: 1,
+        explanation: "SSRC (Synchronization Source Identifier) is a 32-bit number identifying the specific media stream source in an RTP session.",
+        takeaway: "SSRC = Synchronization Source Identifier (32-bit)."
+      },
+      {
+        id: 58, module: "Module 4", topic: "Well-Known Port Range",
+        question: "Well-known port numbers reserved for system services (e.g. HTTP 80, SSH 22, DNS 53) range from:",
+        options: ["0 to 1023", "1024 to 49151", "49152 to 65535", "100 to 500"], correct: 0,
+        explanation: "Ports 0 through 1023 are designated Well-Known Ports reserved for standardized services.",
+        takeaway: "Well-Known Ports = 0 to 1023."
+      },
+      {
+        id: 59, module: "Module 4", topic: "RPC Marshaling",
+        question: "What does 'Marshaling' mean in Remote Procedure Calls?",
+        options: ["Encrypting password data", "Serializing local data structures/parameters into a flat standardized byte stream for transmission", "Routing packets via OSPF", "Allocating port numbers dynamically"], correct: 1,
+        explanation: "Marshaling converts in-memory data structures into a flat, architecture-independent byte stream for wire transmission.",
+        takeaway: "Marshaling = Serialization of parameters for network transmission."
+      },
+      {
+        id: 60, module: "Module 4", topic: "TCP TIME_WAIT State",
+        question: "Why does the TCP initiating endpoint enter the TIME_WAIT state for 2MSL (Maximum Segment Lifetime)?",
+        options: ["To clear CPU cache", "To ensure delayed network segments expire and final ACKs reach the remote endpoint", "To wait for new incoming calls", "To reset sequence numbers"], correct: 1,
+        explanation: "TIME_WAIT lasts 2MSL so old delayed segments expire in the network and the remote side receives the final ACK.",
+        takeaway: "TIME_WAIT state lasts 2MSL to drain old duplicate packets."
+      },
+      {
+        id: 61, module: "Module 4", topic: "UDP Guarantees",
+        question: "Which of the following services is NOT provided by native UDP?",
+        options: ["Port demultiplexing", "Optional header checksum", "Guaranteed in-order retransmission", "Connectionless datagram delivery"], correct: 2,
+        explanation: "UDP provides connectionless best-effort delivery without guaranteed delivery, retransmission, or sequence ordering.",
+        takeaway: "UDP is connectionless and unreliable; no retransmissions."
+      },
+      {
+        id: 62, module: "Module 4", topic: "RTCP Packet Types",
+        question: "Which RTCP packet type is sent by active media senders to convey timing sync and byte count stats?",
+        options: ["Receiver Report (RR)", "Sender Report (SR)", "Source Description (SDES)", "BYE"], correct: 1,
+        explanation: "Sender Reports (SR) are generated by active senders to convey transmission stats and NTP timestamps.",
+        takeaway: "Sender Report (SR) carries sender-side RTP statistics."
+      },
+      {
+        id: 63, module: "Module 4", topic: "RPC Port Resolution",
+        question: "How does an RPC client discover the dynamic port number of a remote service?",
+        options: ["By querying the remote host's Port Mapper / Binder service", "By pinging IPv6 broadcast", "By checking local MAC table", "By scanning ports 1 to 65535"], correct: 0,
+        explanation: "The RPC Client queries the remote Port Mapper service at a known port to look up the dynamic port for a program number.",
+        takeaway: "RPC Port Mapper translates program numbers to network ports."
+      },
+      {
+        id: 64, module: "Module 4", topic: "TCP MSS Parameter",
+        question: "What does MSS stand for in TCP connection options?",
+        options: ["Maximum Socket Speed", "Maximum Segment Size", "Minimum Signal Space", "Media Session Standard"], correct: 1,
+        explanation: "MSS (Maximum Segment Size) specifies the max payload data (in bytes) a TCP stack can receive in a single segment.",
+        takeaway: "MSS = Maximum Segment Size (TCP data payload limit)."
+      },
+      {
+        id: 65, module: "Module 4", topic: "SYN Flood Defense",
+        question: "Which mechanism protects TCP servers against SYN Flood DoS attacks without allocating half-open connection state memory?",
+        options: ["SYN Cookies", "Sliding Window", "AIMD", "Token Bucket"], correct: 0,
+        explanation: "SYN Cookies encode connection parameters into initial sequence numbers, deferring state allocation until the final ACK arrives.",
+        takeaway: "SYN Cookies defend against SYN Flood attacks."
+      },
+      {
+        id: 66, module: "Module 4", topic: "Non-Idempotent RPC",
+        question: "In RPC systems, 'At-least-once' execution semantics can cause errors if the remote operation is:",
+        options: ["Idempotent", "Non-Idempotent (e.g. deducting money from a bank account)", "Read-only", "Stateless"], correct: 1,
+        explanation: "At-least-once retransmits requests. If a non-idempotent operation executes but the reply is lost, retransmitting causes duplicate side effects.",
+        takeaway: "Non-idempotent operations require At-most-once semantics."
+      },
+
+      // ================= MODULE 5 (34 QUESTIONS: 67 to 100) =================
+      {
+        id: 67, module: "Module 5", topic: "Resource Allocation Evaluation",
+        question: "What are the two primary quantitative performance criteria used to evaluate resource allocation?",
+        options: ["Throughput & Delay (Latency)", "Bandwidth & Packet Color", "Hop Count & CPU Clock", "Jitter & Voltage"], correct: 0,
+        explanation: "Resource allocation effectiveness is evaluated on maximizing Throughput while minimizing Delay (latency).",
+        takeaway: "Resource Allocation Evaluation = Maximize Throughput, Minimize Delay."
+      },
+      {
+        id: 68, module: "Module 5", topic: "FIFO Queuing Drawback",
+        question: "What is the primary drawback of FIFO queuing paired with Tail-Drop buffer management?",
+        options: ["Too complex to code", "High-rate flows monopolize buffer space (lack of fairness) and global synchronization occurs", "Automatically reorders packets", "Zero latency"], correct: 1,
+        explanation: "FIFO tail-drop allows aggressive flows to fill router buffers, starving well-behaved flows and causing global TCP synchronization.",
+        takeaway: "FIFO Tail-Drop causes flow unfairness & global synchronization."
+      },
+      {
+        id: 69, module: "Module 5", topic: "Fair Queuing (FQ)",
+        question: "What is the primary objective of Fair Queuing (FQ) at a router output port?",
+        options: ["Serves largest packet first", "Allocates an equal share of link bandwidth (1/N) to every active data flow", "Drops packets with lowest IP", "Compresses headers"], correct: 1,
+        explanation: "Fair Queuing isolates flows into separate queues and serves them round-robin to ensure each active flow receives a 1/N bandwidth share.",
+        takeaway: "Fair Queuing (FQ) gives each flow an equal 1/N bandwidth share."
+      },
+      {
+        id: 70, module: "Module 5", topic: "Weighted Fair Queuing (WFQ)",
+        question: "How does Weighted Fair Queuing (WFQ) enhance basic Fair Queuing?",
+        options: ["Assigns weights/priorities to queues so flows receive bandwidth proportional to their weight", "Uses a single queue", "Drops packets randomly", "Encrypts payloads"], correct: 0,
+        explanation: "WFQ assigns weights to queues, allocating bandwidth to flow i proportional to Weight_i / Total_Weights.",
+        takeaway: "WFQ allocates bandwidth proportionally based on assigned queue weights."
+      },
+      {
+        id: 71, module: "Module 5", topic: "Flow vs Congestion Control",
+        question: "What is the core distinction between Flow Control and Congestion Control?",
+        options: ["Flow control is for routers; Congestion control is for switches", "Flow control prevents receiver buffer overrun; Congestion control prevents core network router overload", "Flow control uses UDP; Congestion control uses TCP", "No distinction"], correct: 1,
+        explanation: "Flow control manages point-to-point sender-to-receiver buffer overflow. Congestion control manages shared network core resources.",
+        takeaway: "Flow Control = Receiver protection | Congestion Control = Network core protection."
+      },
+      {
+        id: 72, module: "Module 5", topic: "AIMD Congestion Control",
+        question: "What does AIMD stand for in TCP congestion control?",
+        options: ["Additive Increase Multiplicative Decrease", "Automatic Increase Maximum Decrease", "Additive Interval Multiplicative Delay", "Average Increase Minimum Drop"], correct: 0,
+        explanation: "AIMD increases cwnd linearly (+1 MSS per RTT) during congestion avoidance and decreases cwnd multiplicatively (halves it) upon loss.",
+        takeaway: "AIMD = Additive Increase (+1 MSS), Multiplicative Decrease (Halve)."
+      },
+      {
+        id: 73, module: "Module 5", topic: "TCP Slow Start Phase",
+        question: "During TCP Slow Start, how does the Congestion Window (cwnd) grow per RTT?",
+        options: ["Linearly (+1 MSS per RTT)", "Exponentially (doubles every RTT)", "Statically", "Decrements by half"], correct: 1,
+        explanation: "In Slow Start, cwnd increases by 1 MSS for each ACK received, resulting in exponential growth (doubling cwnd every RTT).",
+        takeaway: "Slow Start growth is EXPONENTIAL (doubles per RTT)."
+      },
+      {
+        id: 74, module: "Module 5", topic: "Slow Start Threshold",
+        question: "TCP transitions from Slow Start to Congestion Avoidance when cwnd reaches:",
+        options: ["Max Window Size", "ssthresh (Slow Start Threshold)", "rwnd", "Zero"], correct: 1,
+        explanation: "When cwnd reaches ssthresh, TCP transitions from exponential growth (Slow Start) to linear growth (Congestion Avoidance).",
+        takeaway: "Transition point from Slow Start to Congestion Avoidance = ssthresh."
+      },
+      {
+        id: 75, module: "Module 5", topic: "TCP Fast Retransmit",
+        question: "TCP Fast Retransmit is triggered immediately upon receiving how many duplicate ACKs?",
+        options: ["1 Duplicate ACK", "2 Duplicate ACKs", "3 Duplicate ACKs", "5 Duplicate ACKs"], correct: 2,
+        explanation: "Receiving 3 Duplicate ACKs (4 identical ACKs total) triggers Fast Retransmit of the missing segment without waiting for RTO timer.",
+        takeaway: "3 Duplicate ACKs trigger Fast Retransmit."
+      },
+      {
+        id: 76, module: "Module 5", topic: "TCP Retransmission Timeout",
+        question: "When a TCP Retransmission Timeout (RTO) occurs due to severe loss, cwnd is reset to:",
+        options: ["ssthresh / 2", "1 MSS", "Unchanged", "Doubled"], correct: 1,
+        explanation: "Upon a Retransmission Timeout, TCP sets ssthresh = cwnd / 2, resets cwnd = 1 MSS, and re-enters Slow Start.",
+        takeaway: "Timeout -> cwnd reset to 1 MSS, ssthresh halved."
+      },
+      {
+        id: 77, module: "Module 5", topic: "RED Congestion Avoidance",
+        question: "What does the Active Queue Management algorithm RED stand for?",
+        options: ["Rapid Error Detection", "Random Early Detection", "Rate Estimation Device", "Reliable Explicit Delivery"], correct: 1,
+        explanation: "RED stands for Random Early Detection. It calculates average queue size and drops/marks packets randomly before buffers overflow.",
+        takeaway: "RED = Random Early Detection."
+      },
+      {
+        id: 78, module: "Module 5", topic: "RED Threshold Behavior",
+        question: "In RED, what occurs when average queue length is between min_th and max_th?",
+        options: ["All packets are dropped", "Packets are dropped/marked randomly with a probability proportional to queue growth", "No packets dropped", "Router reboots"], correct: 1,
+        explanation: "When average queue size is between min_th and max_th, RED drops/marks incoming packets with a probability p to notify senders to slow down.",
+        takeaway: "Between min_th & max_th -> RED drops packets randomly."
+      },
+      {
+        id: 79, module: "Module 5", topic: "ECN Mechanism",
+        question: "How does ECN (Explicit Congestion Notification) inform TCP endpoints of network congestion?",
+        options: ["Sends ICMP Echo", "Marks ECN bits in IP headers of passing packets without dropping them", "Drops every 10th packet", "Sends RST segment"], correct: 1,
+        explanation: "ECN allows routers to mark bits in the IP header to notify endpoints of congestion without dropping packets.",
+        takeaway: "ECN marks IP header bits to signal congestion without packet drops."
+      },
+      {
+        id: 80, module: "Module 5", topic: "QoS IntServ Architecture",
+        question: "Which Quality of Service (QoS) architecture uses RSVP to make explicit per-flow resource reservations?",
+        options: ["Differentiated Services (DiffServ)", "Integrated Services (IntServ)", "Best Effort", "MPLS-TE"], correct: 1,
+        explanation: "Integrated Services (IntServ) provides end-to-end per-flow QoS guarantees using RSVP resource reservation protocol.",
+        takeaway: "IntServ uses RSVP for per-flow resource reservation."
+      },
+      {
+        id: 81, module: "Module 5", topic: "QoS DiffServ Architecture",
+        question: "In Differentiated Services (DiffServ), which 6-bit IP header field is used for packet classification?",
+        options: ["TTL", "DSCP (Differentiated Services Code Point)", "Flow Label", "Fragment Offset"], correct: 1,
+        explanation: "DiffServ uses the 6-bit DSCP field in the TOS/Traffic Class byte to classify packets into aggregate traffic classes.",
+        takeaway: "DiffServ uses 6-bit DSCP field for traffic classification."
+      },
+      {
+        id: 82, module: "Module 5", topic: "Leaky Bucket Traffic Shaping",
+        question: "Which traffic shaping algorithm converts bursty input traffic into a strictly smooth, constant-rate output flow?",
+        options: ["Leaky Bucket Algorithm", "Token Bucket Algorithm", "FIFO Tail-Drop", "Priority Queuing"], correct: 0,
+        explanation: "The Leaky Bucket algorithm outputs data at a rigid, constant rate regardless of how bursty input traffic is.",
+        takeaway: "Leaky Bucket = Rigid constant output transmission rate."
+      },
+      {
+        id: 83, module: "Module 5", topic: "Token Bucket Traffic Shaping",
+        question: "Which traffic shaping algorithm allows controlled bursts up to bucket size (b) while enforcing a long-term average rate (r)?",
+        options: ["Leaky Bucket Algorithm", "Token Bucket Algorithm", "FIFO Tail-Drop", "Weighted Round Robin"], correct: 1,
+        explanation: "Token Bucket accumulates tokens at rate r up to capacity b, permitting bursts equal to bucket capacity.",
+        takeaway: "Token Bucket allows traffic bursts up to bucket capacity."
+      },
+      {
+        id: 84, module: "Module 5", topic: "Presentation ASN.1",
+        question: "Which ISO standard notation defines abstract data structures independently of machine hardware representation?",
+        options: ["ASN.1 (Abstract Syntax Notation One)", "JSON", "ASCII", "HTML5"], correct: 0,
+        explanation: "ASN.1 (Abstract Syntax Notation One) is a standard notation for defining syntax of complex data structures independently of machine formats.",
+        takeaway: "ASN.1 = Abstract Syntax Notation One."
+      },
+      {
+        id: 85, module: "Module 5", topic: "BER Encoding Format",
+        question: "Basic Encoding Rules (BER) in presentation formatting encode data structures using which triplet format?",
+        options: ["Key-Value-Pair (KVP)", "Type-Length-Value (TLV)", "Header-Payload-Trailer", "Source-Destination-Data"], correct: 1,
+        explanation: "BER encodes data elements into TLV triplets: Type (identifier), Length (byte size), Value (actual data content).",
+        takeaway: "BER uses Type-Length-Value (TLV) structure."
+      },
+      {
+        id: 86, module: "Module 5", topic: "Jitter Definition",
+        question: "In network performance metrics, how is 'Jitter' defined?",
+        options: ["Total round-trip travel time", "The variation in packet arrival delays (Delay Variation)", "Percentage of corrupted bits", "Maximum physical bandwidth"], correct: 1,
+        explanation: "Jitter is the variance in packet inter-arrival latency. High jitter causes audio/video buffer underruns.",
+        takeaway: "Jitter = Packet delay variation over time."
+      },
+      {
+        id: 87, module: "Module 5", topic: "Real-Time Multimedia QoS",
+        question: "Interactive real-time audio/video applications are most sensitive to:",
+        options: ["High latency and jitter (require low delay & bounded jitter)", "Occasional bit corruption", "Lack of TCP 3-way handshake", "IPv6 link-local addresses"], correct: 0,
+        explanation: "Real-time interactive media requires low delay (< 150ms) and minimal jitter to maintain natural communication.",
+        takeaway: "Real-time media requires low latency & bounded jitter."
+      },
+      {
+        id: 88, module: "Module 5", topic: "RSVP Signaling",
+        question: "Which RSVP signaling message is sent by the RECEIVER upstream toward the sender to reserve bandwidth?",
+        options: ["PATH Message", "RESV Message", "JOIN Message", "ACK Message"], correct: 1,
+        explanation: "RSVP is receiver-initiated: senders send PATH messages downstream, and receivers reply with RESV messages upstream to reserve bandwidth.",
+        takeaway: "RESV message is sent by receiver to reserve bandwidth in RSVP."
+      },
+      {
+        id: 89, module: "Module 5", topic: "DiffServ Expedited Forwarding",
+        question: "In DiffServ QoS, which Per-Hop Behavior (PHB) guarantees low loss, low latency, and low jitter for premium traffic?",
+        options: ["Best Effort (BE)", "Assured Forwarding (AF)", "Expedited Forwarding (EF)", "Default Forwarding"], correct: 2,
+        explanation: "Expedited Forwarding (EF) PHB provides a high-priority, low-latency, low-jitter service class.",
+        takeaway: "EF (Expedited Forwarding) = Premium low-latency QoS class."
+      },
+      {
+        id: 90, module: "Module 5", topic: "TCP Fast Recovery",
+        question: "Following Fast Retransmit (3 dup ACKs), TCP enters Fast Recovery. How does it adjust ssthresh and cwnd?",
+        options: ["ssthresh = cwnd / 2, cwnd = ssthresh + 3 MSS", "ssthresh = cwnd, cwnd = 1 MSS", "cwnd doubles", "ssthresh = 0, cwnd = 0"], correct: 0,
+        explanation: "Fast Recovery sets ssthresh = cwnd / 2, inflates cwnd = ssthresh + 3 MSS, and resumes Congestion Avoidance without dropping to 1 MSS.",
+        takeaway: "Fast Recovery sets ssthresh = cwnd/2 and avoids Slow Start."
+      },
+      {
+        id: 91, module: "Module 5", topic: "Karn's Algorithm",
+        question: "What rule does Karn's Algorithm specify regarding RTT measurement for retransmitted segments?",
+        options: ["Double the RTT value", "Do NOT estimate RTT using retransmitted segments to avoid sample ambiguity", "Use UDP ping", "Set RTO to 0"], correct: 1,
+        explanation: "Karn's Algorithm states that RTT estimates must NOT be updated using ACKs from retransmitted segments because of ACK ambiguity.",
+        takeaway: "Karn's Algorithm ignores RTT samples from retransmitted segments."
+      },
+      {
+        id: 92, module: "Module 5", topic: "DECbit Congestion Scheme",
+        question: "In the DECbit scheme, when does a router set the explicit congestion bit in packet headers?",
+        options: ["When buffer is 100% full", "When average queue length at the router is >= 1", "When link speed drops", "Every 10 seconds"], correct: 1,
+        explanation: "DECbit routers set the congestion bit in passing headers whenever average queue size is 1 or greater.",
+        takeaway: "DECbit marks packets when average queue length >= 1."
+      },
+      {
+        id: 93, module: "Module 5", topic: "Max-Min Fairness",
+        question: "Under the Max-Min Fairness criterion, an allocation is fair if:",
+        options: ["All flows receive equal bits regardless of demand", "No flow receives more than its demand, and unsatisfied demands receive equal shares of remaining link bandwidth", "High priority gets 100%", "Fastest flow gets all resources"], correct: 1,
+        explanation: "Max-Min fairness satisfies small demands completely and divides remaining capacity equally among larger demands.",
+        takeaway: "Max-Min Fairness satisfies small demands and splits remaining bandwidth equally."
+      },
+      {
+        id: 94, module: "Module 5", topic: "Priority Queuing Starvation",
+        question: "What major vulnerability affects standard Priority Queuing (PQ) under high traffic?",
+        options: ["High-priority queues freeze", "Low-priority queues suffer complete resource starvation", "Memory leaks", "Checksum errors"], correct: 1,
+        explanation: "Priority Queuing always empties higher-priority queues first. Continuous high-priority traffic completely starves low-priority queues.",
+        takeaway: "Priority Queuing can cause complete starvation of low-priority traffic."
+      },
+      {
+        id: 95, module: "Module 5", topic: "TCP Transmission Window",
+        question: "At any moment, TCP sender's Effective Transmission Window is bounded by:",
+        options: ["Max(cwnd, rwnd)", "Min(cwnd, rwnd)", "cwnd + rwnd", "cwnd * rwnd"], correct: 1,
+        explanation: "Effective Window is bounded by the minimum of network congestion capacity (cwnd) and receiver buffer space (rwnd): Min(cwnd, rwnd).",
+        takeaway: "Effective Window = Min(cwnd, rwnd)."
+      },
+      {
+        id: 96, module: "Module 5", topic: "Network Byte Order Format",
+        question: "In presentation formatting, how is standard multi-byte integer network transmission format specified?",
+        options: ["Little-Endian", "Big-Endian (Network Byte Order)", "Middle-Endian", "Variable-Endian"], correct: 1,
+        explanation: "Network Byte Order is standardized as Big-Endian (most significant byte transmitted first).",
+        takeaway: "Network Byte Order = Big-Endian."
+      },
+      {
+        id: 97, module: "Module 5", topic: "Policing vs Shaping",
+        question: "What is the primary operational difference between Traffic Policing and Traffic Shaping?",
+        options: ["Policing drops/re-marks non-conforming excess traffic immediately; Shaping buffers excess traffic in queues for delayed release", "Policing uses TCP; Shaping uses UDP", "Policing is only for IPv6", "No difference"], correct: 0,
+        explanation: "Policing drops or re-marks out-of-profile traffic instantly. Shaping buffers excess bursts and releases them smoothly.",
+        takeaway: "Policing drops excess traffic instantly; Shaping buffers excess traffic."
+      },
+      {
+        id: 98, module: "Module 5", topic: "Active Queue Management",
+        question: "What is the primary objective of Active Queue Management (AQM) mechanisms like RED?",
+        options: ["To keep average router queue lengths small, avoiding buffer bloat and global synchronization", "To disable TCP congestion control", "To force all traffic onto UDP", "To encrypt router tables"], correct: 0,
+        explanation: "AQM maintains small average queue lengths to provide headroom for traffic bursts and prevent global TCP synchronization.",
+        takeaway: "AQM maintains small average queues to prevent buffer bloat."
+      },
+      {
+        id: 99, module: "Module 5", topic: "Congestion Avoidance Growth",
+        question: "During TCP Congestion Avoidance phase, cwnd grows at what rate?",
+        options: ["Exponentially", "Linearly (+1 MSS per RTT)", "Quadratically", "Logarithmically"], correct: 1,
+        explanation: "In Congestion Avoidance, cwnd grows linearly, increasing by approximately 1 MSS per Round Trip Time (RTT).",
+        takeaway: "Congestion Avoidance growth is LINEAR (+1 MSS per RTT)."
+      },
+      {
+        id: 100, module: "Module 5", topic: "RTCP Bandwidth Overhead",
+        question: "How frequently do RTCP control packets typically consume session bandwidth?",
+        options: ["100% of bandwidth", "Limited to approximately 5% of total session bandwidth", "50% of bandwidth", "Zero bandwidth"], correct: 1,
+        explanation: "RTCP control traffic is scaled and capped at 5% of the overall RTP session bandwidth to keep overhead low.",
+        takeaway: "RTCP control overhead is limited to 5% of total session bandwidth."
+      }
+    ];
+
+    // --- APPLICATION STATE ENGINE ---
+    const STORAGE_KEY = 'cs26505_cbt_app_state_v6';
+
+    function getInitialState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && typeof parsed.currentQId === 'number') {
+            return parsed;
+          }
+        }
+      } catch (e) {}
+
+      return {
+        currentQId: 1,
+        userAnswers: {},
+        markedReview: {},
+        visited: { 1: true },
+        instantFeedback: true,
+        timeLeft: 5400, // 90 minutes
+        isSubmitted: false,
+        selectedModule: 'ALL',
+        paletteStatusFilter: 'ALL',
+        searchQuery: ''
+      };
+    }
+
+    let appState = getInitialState();
+    let timerInterval = null;
+
+    function saveAppState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {}
+    }
+
+    // Timer Logic
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (appState.isSubmitted) {
+          clearInterval(timerInterval);
+          return;
+        }
+        if (appState.timeLeft > 0) {
+          appState.timeLeft -= 1;
+          saveAppState();
+          updateTimerUI();
+        } else {
+          clearInterval(timerInterval);
+          window.confirmSubmitExam();
+        }
+      }, 1000);
+    }
+
+    function formatTime(secs) {
+      const m = Math.floor(secs / 60);
+      const s = secs % 60;
+      return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+
+    function updateTimerUI() {
+      const timerEl = document.getElementById('timer-display');
+      if (timerEl) {
+        timerEl.textContent = formatTime(appState.timeLeft);
+        if (appState.timeLeft < 300) {
+          timerEl.className = "text-rose-400 font-bold animate-pulse";
+        }
+      }
+    }
+
+    // Calculators & Helpers
+    function getLiveStats() {
+      let correct = 0;
+      let incorrect = 0;
+      Object.entries(appState.userAnswers).forEach(([qId, ansOpt]) => {
+        const q = QUESTIONS.find(item => item.id === Number(qId));
+        if (q) {
+          if (ansOpt === q.correct) correct++;
+          else incorrect++;
+        }
+      });
+      const attempted = Object.keys(appState.userAnswers).length;
+      const accuracy = attempted > 0 ? ((correct / attempted) * 100).toFixed(1) : "0.0";
+      const percentage = ((correct / QUESTIONS.length) * 100).toFixed(1);
+
+      return {
+        correct,
+        incorrect,
+        attempted,
+        unattempted: QUESTIONS.length - attempted,
+        accuracy,
+        percentage
+      };
+    }
+
+    // Get Filtered Questions List based on Module & Search (For Workspace View)
+    function getFilteredQuestions() {
+      return QUESTIONS.filter(q => {
+        if (appState.selectedModule !== 'ALL' && q.module !== appState.selectedModule) {
+          return false;
+        }
+        if (appState.searchQuery.trim() !== '') {
+          const qry = appState.searchQuery.toLowerCase().trim();
+          const mQ = q.question.toLowerCase().includes(qry);
+          const mT = q.topic.toLowerCase().includes(qry);
+          const mId = q.id.toString() === qry;
+          if (!mQ && !mT && !mId) return false;
+        }
+        return true;
+      });
+    }
+
+    // Get Palette Filtered Questions List (Module + Status + Search)
+    function getPaletteFilteredList() {
+      return QUESTIONS.filter(q => {
+        const userAns = appState.userAnswers[q.id];
+        const isCorrect = userAns !== undefined && userAns === q.correct;
+        const isWrong = userAns !== undefined && userAns !== q.correct;
+        const isMarked = !!appState.markedReview[q.id];
+        const isAttempted = userAns !== undefined;
+
+        if (appState.selectedModule !== 'ALL' && q.module !== appState.selectedModule) {
+          return false;
+        }
+        if (appState.paletteStatusFilter === 'CORRECT' && !isCorrect) return false;
+        if (appState.paletteStatusFilter === 'WRONG' && !isWrong) return false;
+        if (appState.paletteStatusFilter === 'MARKED' && !isMarked) return false;
+        if (appState.paletteStatusFilter === 'UNATTEMPTED' && isAttempted) return false;
+
+        if (appState.searchQuery.trim() !== '') {
+          const qry = appState.searchQuery.toLowerCase().trim();
+          const mQ = q.question.toLowerCase().includes(qry);
+          const mT = q.topic.toLowerCase().includes(qry);
+          const mId = q.id.toString() === qry;
+          if (!mQ && !mT && !mId) return false;
+        }
+
+        return true;
+      });
+    }
+
+    // --- GLOBAL EVENT HANDLERS (EXPLICITLY BOUND TO WINDOW) ---
+    window.selectOption = function(optIdx) {
+      if (appState.isSubmitted) return;
+      appState.userAnswers[appState.currentQId] = optIdx;
+      appState.visited[appState.currentQId] = true;
+      saveAppState();
+      renderApp();
+    };
+
+    window.clearChoice = function() {
+      if (appState.isSubmitted) return;
+      delete appState.userAnswers[appState.currentQId];
+      saveAppState();
+      renderApp();
+    };
+
+    window.toggleMarkReview = function() {
+      appState.markedReview[appState.currentQId] = !appState.markedReview[appState.currentQId];
+      saveAppState();
+      renderApp();
+    };
+
+    window.jumpToQuestionById = function(qId) {
+      const q = QUESTIONS.find(item => item.id === qId);
+      if (q) {
+        appState.currentQId = q.id;
+        appState.visited[q.id] = true;
+        saveAppState();
+        renderApp();
+      }
+    };
+
+    window.goToNextQuestion = function() {
+      const filtered = getFilteredQuestions();
+      if (filtered.length === 0) return;
+      const currentPos = filtered.findIndex(q => q.id === appState.currentQId);
+      if (currentPos >= 0 && currentPos < filtered.length - 1) {
+        window.jumpToQuestionById(filtered[currentPos + 1].id);
+      }
+    };
+
+    window.goToPrevQuestion = function() {
+      const filtered = getFilteredQuestions();
+      if (filtered.length === 0) return;
+      const currentPos = filtered.findIndex(q => q.id === appState.currentQId);
+      if (currentPos > 0) {
+        window.jumpToQuestionById(filtered[currentPos - 1].id);
+      }
+    };
+
+    window.toggleInstantFeedback = function() {
+      appState.instantFeedback = !appState.instantFeedback;
+      saveAppState();
+      renderApp();
+    };
+
+    window.setModuleFilter = function(mod) {
+      appState.selectedModule = mod;
+      const filtered = getFilteredQuestions();
+      if (filtered.length > 0) {
+        const existsInFiltered = filtered.some(q => q.id === appState.currentQId);
+        if (!existsInFiltered) {
+          appState.currentQId = filtered[0].id;
+          appState.visited[filtered[0].id] = true;
+        }
+      }
+      saveAppState();
+      renderApp();
+    };
+
+    window.setPaletteStatusFilter = function(st) {
+      appState.paletteStatusFilter = st;
+      saveAppState();
+      renderApp();
+    };
+
+    window.setSearchQuery = function(val) {
+      appState.searchQuery = val;
+      renderApp();
+    };
+
+    window.openSubmitModal = function() {
+      const stats = getLiveStats();
+      const attemptedEl = document.getElementById('modal-attempted-cnt');
+      const unansweredEl = document.getElementById('modal-unanswered-cnt');
+      const markedEl = document.getElementById('modal-marked-cnt');
+      
+      if (attemptedEl) attemptedEl.textContent = stats.attempted;
+      if (unansweredEl) unansweredEl.textContent = stats.unattempted;
+      if (markedEl) markedEl.textContent = Object.keys(appState.markedReview).filter(k => appState.markedReview[k]).length;
+      
+      const modal = document.getElementById('submit-modal');
+      if (modal) modal.classList.remove('hidden');
+    };
+
+    window.closeSubmitModal = function() {
+      const modal = document.getElementById('submit-modal');
+      if (modal) modal.classList.add('hidden');
+    };
+
+    window.confirmSubmitExam = function() {
+      window.closeSubmitModal();
+      appState.isSubmitted = true;
+      saveAppState();
+      renderApp();
+    };
+
+    window.resetExam = function() {
+      if (confirm("Are you sure you want to reset all answers and restart the test?")) {
+        localStorage.removeItem(STORAGE_KEY);
+        appState = getInitialState();
+        saveAppState();
+        startTimer();
+        renderApp();
+      }
+    };
+
+    window.toggleMobileDrawer = function(open) {
+      const drawer = document.getElementById('mobile-drawer');
+      if (!drawer) return;
+      if (open) {
+        drawer.classList.remove('hidden');
+        renderMobilePalette();
+      } else {
+        drawer.classList.add('hidden');
+      }
+    };
+
+    // Keyboard Navigation Shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.key === 'ArrowLeft') window.goToPrevQuestion();
+      else if (e.key === 'ArrowRight') window.goToNextQuestion();
+    });
+
+    // --- MAIN RENDER CONTROLLER ---
+    function renderHeader() {
+      const stats = getLiveStats();
+      const container = document.getElementById('header-container');
+      if (!container) return;
+
+      container.innerHTML = `
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-600 to-cyan-500 flex items-center justify-center font-black text-white text-lg shadow-lg shadow-teal-500/20">
+            CS
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <h1 class="text-base sm:text-lg font-extrabold text-slate-100 leading-tight">
+                CS26505: Advanced Networking
+              </h1>
+              <span class="px-2 py-0.5 rounded-full bg-teal-950 text-teal-400 border border-teal-800 text-[10px] font-bold uppercase tracking-wider">
+                Testbook CBT
+              </span>
+            </div>
+            <p class="text-xs text-slate-400 font-medium">
+              Modules 3, 4 & 5 • 100 High-Yield MCQs
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center flex-wrap gap-2 sm:gap-3">
+          <!-- INSTANT FEEDBACK TOGGLE SWITCH -->
+          <div class="flex items-center space-x-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
+            <span class="text-xs font-semibold text-slate-300">Instant Feedback:</span>
+            <button
+              onclick="window.toggleInstantFeedback()"
+              class="relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none ${appState.instantFeedback ? 'bg-teal-600' : 'bg-slate-700'}"
+              aria-label="Toggle Instant Feedback Mode"
+            >
+              <span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${appState.instantFeedback ? 'translate-x-5' : 'translate-x-1'}"></span>
+            </button>
+            <span class="text-[11px] font-bold uppercase ${appState.instantFeedback ? 'text-teal-400' : 'text-slate-500'}">
+              ${appState.instantFeedback ? 'ON' : 'OFF'}
+            </span>
+          </div>
+
+          <!-- TIMER DISPLAY -->
+          <div class="flex items-center px-3.5 py-1.5 rounded-xl bg-slate-800/90 border border-slate-700 text-xs font-mono font-bold text-teal-300">
+            <svg class="w-4 h-4 mr-1.5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span id="timer-display">${formatTime(appState.timeLeft)}</span>
+          </div>
+
+          <!-- LIVE ACCURACY BADGE -->
+          <div class="hidden sm:flex items-center space-x-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-xs">
+            <span class="text-slate-400">Accuracy:</span>
+            <span class="font-extrabold text-teal-400">${stats.accuracy}%</span>
+          </div>
+
+          <!-- SUBMIT / RETAKE BUTTON -->
+          ${!appState.isSubmitted ? `
+            <button onclick="window.openSubmitModal()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-teal-900/40 transition active:scale-95">
+              Submit Test
+            </button>
+          ` : `
+            <button onclick="window.resetExam()" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 transition">
+              Retake Test
+            </button>
+          `}
+
+          <!-- MOBILE PALETTE TOGGLE BUTTON (< 1024px) -->
+          <button onclick="window.toggleMobileDrawer(true)" class="lg:hidden px-3 py-1.5 rounded-xl bg-slate-800 text-teal-300 border border-slate-700 text-xs font-bold flex items-center gap-1.5">
+            <span>Grid (100)</span>
+          </button>
+        </div>
+      `;
+    }
+
+    function renderQuestionWorkspace() {
+      const q = QUESTIONS.find(item => item.id === appState.currentQId) || QUESTIONS[0];
+      const stats = getLiveStats();
+      const userAns = appState.userAnswers[q.id];
+      const isMarked = !!appState.markedReview[q.id];
+      const hasAnswered = userAns !== undefined;
+
+      const filtered = getFilteredQuestions();
+      const currentPosInFiltered = filtered.findIndex(item => item.id === q.id);
+      const isFirstInFiltered = currentPosInFiltered <= 0;
+      const isLastInFiltered = currentPosInFiltered >= filtered.length - 1;
+
+      let optionsHTML = q.options.map((opt, idx) => {
+        const isSelected = userAns === idx;
+        const isCorrectOpt = idx === q.correct;
+
+        let cardStyle = "bg-slate-900/80 border-slate-800 text-slate-300 hover:bg-slate-800/80 hover:border-slate-700";
+        let badgeStyle = "bg-slate-800 text-slate-400 border-slate-700";
+        let iconTag = "";
+
+        if (appState.instantFeedback && hasAnswered) {
+          if (isCorrectOpt) {
+            cardStyle = "bg-emerald-950/80 border-emerald-500 text-emerald-100 pulse-glow-green font-semibold";
+            badgeStyle = "bg-emerald-600 text-white font-bold";
+            iconTag = `<span class="ml-auto font-bold text-emerald-400 text-xs sm:text-sm flex items-center gap-1">✓ Correct</span>`;
+          } else if (isSelected && !isCorrectOpt) {
+            cardStyle = "bg-rose-950/80 border-rose-500 text-rose-100 pulse-glow-red font-semibold";
+            badgeStyle = "bg-rose-600 text-white font-bold";
+            iconTag = `<span class="ml-auto font-bold text-rose-400 text-xs sm:text-sm flex items-center gap-1">✗ Your Choice</span>`;
+          }
+        } else if (isSelected) {
+          cardStyle = "bg-teal-950/80 border-teal-500 text-teal-100 font-semibold shadow-lg shadow-teal-900/20";
+          badgeStyle = "bg-teal-600 text-white font-bold";
+        }
+
+        return `
+          <div
+            onclick="window.selectOption(${idx})"
+            class="flex items-center p-3.5 sm:p-4 rounded-2xl border-2 cursor-pointer transition-all duration-150 ${cardStyle}"
+          >
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center text-xs mr-3 border shrink-0 transition ${badgeStyle}">
+              ${['A', 'B', 'C', 'D'][idx]}
+            </div>
+            <span class="text-xs sm:text-base flex-1 leading-snug">${opt}</span>
+            ${iconTag}
+          </div>
+        `;
+      }).join('');
+
+      let explanationHTML = '';
+      if (appState.instantFeedback && hasAnswered) {
+        explanationHTML = `
+          <div class="mt-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 border border-slate-700 shadow-xl space-y-3 animate-fade-in">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+              <span class="text-xs font-black uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
+                💡 Solution & Detailed Explanation
+              </span>
+              <span class="text-[11px] font-bold text-slate-400">
+                Topic: ${q.topic}
+              </span>
+            </div>
+            <p class="text-xs sm:text-sm text-slate-200 leading-relaxed">
+              ${q.explanation}
+            </p>
+            <div class="bg-teal-950/50 border border-teal-800/60 p-3 rounded-xl flex items-start space-x-2 text-xs text-teal-200">
+              <span class="font-bold text-teal-400 shrink-0">📌 Exam Tip:</span>
+              <span>${q.takeaway}</span>
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="lg:col-span-3 flex flex-col space-y-4">
+          <!-- MODULE TABS BAR -->
+          <div class="flex flex-wrap items-center justify-between bg-slate-900/90 p-3 rounded-2xl border border-slate-800 gap-2">
+            <div class="flex flex-wrap items-center gap-1.5">
+              ${['ALL', 'Module 3', 'Module 4', 'Module 5'].map(mod => `
+                <button
+                  onclick="window.setModuleFilter('${mod}')"
+                  class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition ${appState.selectedModule === mod ? 'bg-teal-600 text-white shadow-md shadow-teal-600/30' : 'bg-slate-800/80 text-slate-400 hover:bg-slate-700 hover:text-slate-200'}"
+                >
+                  ${mod === 'ALL' ? 'All Modules (100)' : mod}
+                </button>
+              `).join('')}
+            </div>
+            <div class="text-xs text-slate-400 font-medium">
+              Attempted: <span class="font-bold text-teal-400">${stats.attempted}</span> / 100
+            </div>
+          </div>
+
+          <!-- QUESTION CARD -->
+          <div class="ed-card rounded-3xl p-5 sm:p-8 flex-1 flex flex-col justify-between shadow-2xl relative border border-slate-800">
+            <div>
+              <!-- TOP QUESTION HEADER -->
+              <div class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-4 mb-6 gap-2">
+                <div class="flex items-center space-x-2">
+                  <span class="px-3 py-1 rounded-full bg-teal-950 text-teal-400 border border-teal-800 font-extrabold text-xs uppercase tracking-wide">
+                    Q${q.id} of 100
+                  </span>
+                  <span class="px-3 py-1 rounded-full bg-slate-800 text-slate-300 font-bold text-xs">
+                    ${q.module}
+                  </span>
+                  <span class="hidden sm:inline-block px-3 py-1 rounded-full bg-slate-800/60 text-slate-400 text-xs italic">
+                    ${q.topic}
+                  </span>
+                </div>
+                <button
+                  onclick="window.toggleMarkReview()"
+                  class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition ${isMarked ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}"
+                >
+                  <span>📌 ${isMarked ? 'Marked for Review' : 'Mark for Review'}</span>
+                </button>
+              </div>
+
+              <!-- QUESTION TEXT -->
+              <div class="mb-6">
+                <h2 class="text-base sm:text-xl font-bold text-slate-100 leading-relaxed">
+                  ${q.question}
+                </h2>
+              </div>
+
+              <!-- OPTIONS -->
+              <div class="space-y-3">
+                ${optionsHTML}
+              </div>
+
+              <!-- EXPLANATION CARD -->
+              ${explanationHTML}
+            </div>
+
+            <!-- NAVIGATION ACTION BAR -->
+            <div class="flex flex-wrap items-center justify-between border-t border-slate-800 pt-5 mt-8 gap-3">
+              <button
+                onclick="window.clearChoice()"
+                ${!hasAnswered ? 'disabled' : ''}
+                class="px-4 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-bold transition"
+              >
+                Clear Choice
+              </button>
+              <div class="flex items-center space-x-3">
+                <button
+                  onclick="window.goToPrevQuestion()"
+                  ${isFirstInFiltered ? 'disabled' : ''}
+                  class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-200 text-xs sm:text-sm font-bold flex items-center space-x-1.5 transition"
+                >
+                  <span>← Prev</span>
+                </button>
+                <button
+                  onclick="window.goToNextQuestion()"
+                  ${isLastInFiltered ? 'disabled' : ''}
+                  class="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs sm:text-sm font-extrabold flex items-center space-x-1.5 shadow-lg shadow-teal-600/30 transition"
+                >
+                  <span>Next →</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function getPaletteBtnClass(q) {
+      const qId = q.id;
+      const userAns = appState.userAnswers[qId];
+      const isMarked = !!appState.markedReview[qId];
+      const isCurrent = appState.currentQId === q.id;
+      const isAns = userAns !== undefined;
+
+      let base = "h-9 w-full rounded-lg text-xs font-bold transition flex items-center justify-center relative shadow-sm ";
+      if (isCurrent) base += "ring-2 ring-teal-400 ring-offset-2 ring-offset-slate-950 z-10 font-extrabold ";
+
+      if (appState.instantFeedback && isAns) {
+        if (userAns === q.correct) {
+          return base + "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-900/30";
+        } else {
+          return base + "bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/30";
+        }
+      }
+
+      if (isAns && isMarked) return base + "bg-purple-600 hover:bg-purple-500 text-white";
+      if (isMarked) return base + "bg-amber-500 hover:bg-amber-400 text-slate-950";
+      if (isAns) return base + "bg-teal-600 hover:bg-teal-500 text-white";
+      if (appState.visited[qId]) return base + "bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700";
+
+      return base + "bg-slate-900/80 hover:bg-slate-800 text-slate-400 border border-slate-800";
+    }
+
+    function renderPaletteGrid() {
+      const list = getPaletteFilteredList();
+      const gridHTML = list.length > 0 ? list.map(q => `
+        <button
+          onclick="window.jumpToQuestionById(${q.id})"
+          class="${getPaletteBtnClass(q)}"
+        >
+          ${q.id}
+        </button>
+      `).join('') : `<p class="col-span-5 text-xs text-slate-500 py-4 text-center">No questions match filters.</p>`;
+
+      return `
+        <div class="lg:col-span-1 hidden lg:block">
+          <div class="ed-card rounded-3xl p-4 sm:p-5 flex flex-col h-full border border-slate-800 sticky top-20">
+            <div class="border-b border-slate-800 pb-3 mb-3">
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-xs font-black text-slate-200 uppercase tracking-wider">
+                  Question Palette (${list.length})
+                </h3>
+                <button onclick="window.setSearchQuery(''); window.setPaletteStatusFilter('ALL');" class="text-[10px] text-teal-400 hover:underline font-bold">
+                  Reset Filters
+                </button>
+              </div>
+
+              <input
+                type="text"
+                placeholder="Search Q# or Topic..."
+                value="${appState.searchQuery}"
+                oninput="window.setSearchQuery(this.value)"
+                class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-teal-500 mb-2"
+              />
+
+              <div class="flex flex-wrap gap-1 text-[10px]">
+                ${['ALL', 'CORRECT', 'WRONG', 'MARKED', 'UNATTEMPTED'].map(st => `
+                  <button
+                    onclick="window.setPaletteStatusFilter('${st}')"
+                    class="px-2 py-0.5 rounded-md font-bold transition ${appState.paletteStatusFilter === st ? 'bg-teal-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}"
+                  >
+                    ${st}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-1.5 text-[11px] mb-3 pb-3 border-b border-slate-800">
+              <div class="flex items-center space-x-1.5"><div class="w-3 h-3 rounded-md bg-emerald-600"></div><span class="text-slate-400">Correct</span></div>
+              <div class="flex items-center space-x-1.5"><div class="w-3 h-3 rounded-md bg-rose-600"></div><span class="text-slate-400">Incorrect</span></div>
+              <div class="flex items-center space-x-1.5"><div class="w-3 h-3 rounded-md bg-amber-500"></div><span class="text-slate-400">Marked</span></div>
+              <div class="flex items-center space-x-1.5"><div class="w-3 h-3 rounded-md bg-slate-900 border border-slate-800"></div><span class="text-slate-400">Unattempted</span></div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto max-h-[460px] pr-1">
+              <div class="grid grid-cols-5 gap-2">
+                ${gridHTML}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMobilePalette() {
+      const container = document.getElementById('mobile-palette-container');
+      if (!container) return;
+      const list = getPaletteFilteredList();
+      const gridHTML = list.length > 0 ? list.map(q => `
+        <button
+          onclick="window.jumpToQuestionById(${q.id}); window.toggleMobileDrawer(false);"
+          class="${getPaletteBtnClass(q)}"
+        >
+          ${q.id}
+        </button>
+      `).join('') : `<p class="col-span-5 text-xs text-slate-500 py-4 text-center">No questions match filters.</p>`;
+
+      container.innerHTML = `
+        <div class="space-y-3">
+          <input
+            type="text"
+            placeholder="Search Q# or Topic..."
+            value="${appState.searchQuery}"
+            oninput="window.setSearchQuery(this.value)"
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-teal-500"
+          />
+          <div class="grid grid-cols-5 gap-2">
+            ${gridHTML}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderScorecardDashboard() {
+      const stats = getLiveStats();
+
+      // Calculate Module Specifics
+      const modStats = {
+        "Module 3": { total: 0, correct: 0, title: "IPv6, Multicast, MPLS & Mobile IP" },
+        "Module 4": { total: 0, correct: 0, title: "UDP, TCP, RPC & RTP Protocols" },
+        "Module 5": { total: 0, correct: 0, title: "Congestion Control, QoS & Traffic Shaping" }
+      };
+
+      QUESTIONS.forEach(q => {
+        modStats[q.module].total += 1;
+        const userAns = appState.userAnswers[q.id];
+        if (userAns !== undefined && userAns === q.correct) {
+          modStats[q.module].correct += 1;
+        }
+      });
+
+      const isPassed = Number(stats.percentage) >= 60;
+
+      return `
+        <div class="max-w-7xl w-full mx-auto p-4 sm:p-8 space-y-8 animate-fade-in">
+          <div class="ed-card rounded-3xl p-6 sm:p-10 border border-teal-500/30 bg-gradient-to-r from-slate-900 via-teal-950/30 to-slate-900 shadow-2xl">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-center">
+              
+              <!-- SCORE BADGE -->
+              <div class="lg:col-span-1 text-center border-b lg:border-b-0 lg:border-r border-slate-800 pb-6 lg:pb-0 lg:pr-8">
+                <div class="inline-flex flex-col items-center justify-center w-36 h-36 rounded-full bg-slate-950 border-4 ${isPassed ? 'border-emerald-500 shadow-emerald-500/30' : 'border-rose-500 shadow-rose-500/30'} shadow-2xl mb-4">
+                  <span class="text-4xl font-black text-white">${stats.correct}</span>
+                  <span class="text-xs font-bold text-teal-400 uppercase tracking-widest">Out of 100</span>
+                </div>
+                <h3 class="text-xl font-extrabold text-slate-100">
+                  ${isPassed ? '🏆 Test Passed!' : '📚 Revision Needed'}
+                </h3>
+                <p class="text-xs text-slate-400 mt-1">Overall Percentage: ${stats.percentage}%</p>
+              </div>
+
+              <!-- DETAILED METRICS -->
+              <div class="lg:col-span-3 space-y-6">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div class="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 text-center">
+                    <span class="text-xs font-bold text-slate-400 block mb-1">Attempted</span>
+                    <span class="text-2xl font-black text-white">${stats.attempted}</span>
+                  </div>
+                  <div class="bg-emerald-950/40 p-4 rounded-2xl border border-emerald-800/50 text-center">
+                    <span class="text-xs font-bold text-emerald-400 block mb-1">Correct</span>
+                    <span class="text-2xl font-black text-emerald-300">${stats.correct}</span>
+                  </div>
+                  <div class="bg-rose-950/40 p-4 rounded-2xl border border-rose-800/50 text-center">
+                    <span class="text-xs font-bold text-rose-400 block mb-1">Incorrect</span>
+                    <span class="text-2xl font-black text-rose-300">${stats.incorrect}</span>
+                  </div>
+                  <div class="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 text-center">
+                    <span class="text-xs font-bold text-teal-400 block mb-1">Accuracy</span>
+                    <span class="text-2xl font-black text-teal-300">${stats.accuracy}%</span>
+                  </div>
+                </div>
+
+                <!-- MODULE BREAKDOWN -->
+                <div class="space-y-4">
+                  <h4 class="text-sm font-bold text-slate-200 uppercase tracking-wider">
+                    Module-Wise Performance Breakdown
+                  </h4>
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    ${Object.entries(modStats).map(([modKey, modInfo]) => {
+                      const pct = modInfo.total > 0 ? ((modInfo.correct / modInfo.total) * 100).toFixed(0) : 0;
+                      return `
+                        <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-2">
+                          <div class="flex items-center justify-between">
+                            <span class="text-xs font-extrabold text-teal-400">${modKey}</span>
+                            <span class="text-xs font-bold text-slate-300">${modInfo.correct}/${modInfo.total} (${pct}%)</span>
+                          </div>
+                          <p class="text-[11px] text-slate-400 truncate">${modInfo.title}</p>
+                          <div class="w-full h-2 rounded-full bg-slate-950 overflow-hidden">
+                            <div class="h-full bg-teal-500 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+                          </div>
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-end space-x-4 pt-2">
+                  <button
+                    onclick="window.resetExam()"
+                    class="px-6 py-3 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-extrabold text-sm shadow-xl shadow-teal-600/30 transition"
+                  >
+                    Retake Test
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderApp() {
+      renderHeader();
+      const root = document.getElementById('app-root');
+      if (!root) return;
+
+      if (!appState.isSubmitted) {
+        root.className = "flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 grid grid-cols-1 lg:grid-cols-4 gap-6";
+        root.innerHTML = renderQuestionWorkspace() + renderPaletteGrid();
+      } else {
+        root.className = "flex-1 max-w-7xl w-full mx-auto p-4 sm:p-8 space-y-8";
+        root.innerHTML = renderScorecardDashboard();
+      }
+    }
+
+    // INITIALIZE APP ON LOAD
+    window.onload = function() {
+      startTimer();
+      renderApp();
+    };
+  </script>
+</body>
+</html>
